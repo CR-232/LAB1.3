@@ -39,6 +39,6 @@ public class Main {
         thread2.join();
         System.out.println("Thread 2 s-a terminat.");
 
-        System.out.println("Programul s-a încheiat.");
+        System.out.println("Programul s-a încheiat..");
     }
 }
