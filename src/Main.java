@@ -4,7 +4,7 @@ public class Main {
     static int[] tabCalc = new int[n];
     static int[] tabPar = new int[n];
 
-    // 🔒 LOCK GLOBAL pentru absolut toate afișările
+    //LOCK GLOBAL pentru absolut toate afișările
     static final Object printLock = new Object();
 
     static FirCalcInce Th1 = new FirCalcInce();
@@ -39,7 +39,7 @@ public class Main {
         }
     }
 
-    // 🔒 Afișare lentă 100% protejată
+    //Afișare lentă 100% protejată
     public static void afisare(String text) {
         synchronized (printLock) {
             for (char c : text.toCharArray()) {
@@ -50,7 +50,7 @@ public class Main {
         }
     }
 
-    // 🔒 Afișare instant protejată
+    //Afișare instant protejată
     public static void printSync(String text) {
         synchronized (printLock) {
             System.out.println(text);
