@@ -133,7 +133,7 @@ public class Main {
                 e.printStackTrace();
             }
 
-            afisare(getName() + " Disciplina: Programare Concurenta si Distribuita1");
+            afisare(getName() + " Disciplina: Programare Concurenta si Distribuita");
         }
     }
 
