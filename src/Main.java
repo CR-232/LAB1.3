@@ -1,106 +1,109 @@
-public class Main {
+import java.util.concurrent.*;
+import java.util.*;
 
-    static int n = 1000;
-    static int[] data = new int[n];
+class Depozit {
+    private final int capacitate;
+    private final BlockingQueue<Character> buffer;
 
-    static Th1 fir1 = new Th1();
-    static Th2 fir2 = new Th2();
-    static Th3 fir3 = new Th3();
-    static Th4 fir4 = new Th4();
+    public Depozit(int capacitate) {
+        this.capacitate = capacitate;
+        this.buffer = new ArrayBlockingQueue<>(capacitate);
+    }
 
-    public static void main(String[] args) {
+    public void produce(Character obiect, String numeProducator) throws InterruptedException {
+        buffer.put(obiect); // blochează dacă depozitul e plin
+        System.out.println(numeProducator + " a produs: " + obiect + " | Depozit: " + buffer);
+    }
 
-        for (int i = 0; i < n; i++) {
-            data[i] = (int)(Math.random()*1000);
-        }
+    public Character consume(String numeConsumator) throws InterruptedException {
+        Character obiect = buffer.take(); // blochează dacă depozitul e gol
+        System.out.println(numeConsumator + " a consumat: " + obiect + " | Depozit: " + buffer);
+        return obiect;
+    }
+}
 
-        fir1.setName("Th1");
-        fir2.setName("Th2");
-        fir3.setName("Th3");
-        fir4.setName("Th4");
+class Producator implements Runnable {
+    private final Depozit depozit;
+    private final String nume;
+    private final int F;
+    private final char[] obiecte;
 
-        // sinc th 1–2  join
-        fir1.start();
-        try { fir1.join(); } catch (Exception e) {}
-        fir2.start();
-        try { fir2.join(); } catch (Exception e) {}
+    public Producator(Depozit depozit, String nume, int F, char[] obiecte) {
+        this.depozit = depozit;
+        this.nume = nume;
+        this.F = F;
+        this.obiecte = obiecte;
+    }
 
-        // sinc th 3–4
-        fir3.setPriority(Thread.MAX_PRIORITY);
-        fir4.setPriority(Thread.MIN_PRIORITY);
-
-        fir3.start();
-        try { Thread.sleep(150); } catch(Exception e){}
-        fir4.start();
-
+    @Override
+    public void run() {
+        Random rand = new Random();
         try {
-            fir3.join();
-            fir4.join();
-        } catch (Exception e) {}
-    }
-
-    // afisare lenta
-    static void printSlow(String txt){
-        for(char c : txt.toCharArray()){
-            System.out.print(c);
-            try{ Thread.sleep(100); } catch(Exception e){}
-        }
-        System.out.println();
-    }
-
-    static class Th1 extends Thread {
-        public void run(){
-            long sum = 0;
-            for(int x : data){
-                if(x % 2 == 0){
-                    sum += x;
-                }
+            for (int i = 0; i < F; i++) {
+                char obiect = obiecte[rand.nextInt(obiecte.length)];
+                depozit.produce(obiect, nume);
+                Thread.sleep(rand.nextInt(500)); // timp aleator între producere
             }
-            System.out.println(getName() + " → Suma numerelor pare = " + sum);
-
-            printSlow(getName() + " → Prenume: Victor , Radu");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
+}
 
-    static class Th2 extends Thread {
-        public void run(){
-            long sum = 0;
-            for(int x : data){
-                if(x % 2 != 0){
-                    sum += x;
-                }
-            }
-            System.out.println(getName() + " → Suma numerelor impare = " + sum);
+class Consumator implements Runnable {
+    private final Depozit depozit;
+    private final String nume;
+    private final int Z;
 
-            printSlow(getName() + " → Nume: Tihon , Vlas");
-        }
+    public Consumator(Depozit depozit, String nume, int Z) {
+        this.depozit = depozit;
+        this.nume = nume;
+        this.Z = Z;
     }
 
-    static class Th3 extends Thread {
-        public void run(){
-            StringBuilder sb = new StringBuilder();
-            for(int i = 100; i <= 200; i++){
-                sb.append(data[i]).append(" ");
-                try{ Thread.sleep(1);} catch(Exception e){}
+    @Override
+    public void run() {
+        try {
+            for (int i = 0; i < Z; i++) {
+                depozit.consume(nume);
+                Thread.sleep(300); // timp aleator între consumuri
             }
-            System.out.println(getName() + " → Segment [100..200]:");
-            System.out.println(sb.toString());
-
-            printSlow(getName() + " → Disciplina: Programare Concurenta si Distribuita");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
+}
 
-    static class Th4 extends Thread {
-        public void run(){
-            StringBuilder sb = new StringBuilder();
-            for(int i = 900; i >= 800; i--){
-                sb.append(data[i]).append(" ");
-                try{ Thread.sleep(1);} catch(Exception e){}
-            }
-            System.out.println(getName() + " → Segment [900..800]:");
-            System.out.println(sb.toString());
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        int X = 4; // nr producatori
+        int Y = 3; // nr consumatori
+        int Z = 3; // obiecte per consumator
+        int D = 10; // capacitate depozit
+        int F = 2; // obiecte per producator
 
-            printSlow(getName() + " → Grupa: CR-232");
+        char[] vocale = {'A', 'E', 'I', 'O', 'U'};
+
+        Depozit depozit = new Depozit(D);
+
+        // Pornim producatorii
+        Thread[] producatori = new Thread[X];
+        for (int i = 0; i < X; i++) {
+            producatori[i] = new Thread(new Producator(depozit, "Producator-" + (i + 1), F, vocale));
+            producatori[i].start();
         }
+
+        // Pornim consumatorii
+        Thread[] consumatori = new Thread[Y];
+        for (int i = 0; i < Y; i++) {
+            consumatori[i] = new Thread(new Consumator(depozit, "Consumator-" + (i + 1), Z));
+            consumatori[i].start();
+        }
+
+        // Asteptam terminarea tuturor thread-urilor
+        for (Thread t : producatori) t.join();
+        for (Thread t : consumatori) t.join();
+
+        System.out.println("Proces finalizat.");
     }
 }
