@@ -10,12 +10,9 @@ class Depozit {
         this.buffer = new ArrayBlockingQueue<>(capacitate);
     }
 
-    public void produce(Character obiect1, Character obiect2, String numeProducator) throws InterruptedException {
+    public void produce(Character obiect1, String numeProducator) throws InterruptedException {
         buffer.put(obiect1);
         System.out.println(numeProducator + " a produs: " + obiect1 + " | Depozit: " + buffer);
-
-        buffer.put(obiect2);
-        System.out.println(numeProducator + " a produs: " + obiect2 + " | Depozit: " + buffer);
     }
 
     public Character consume(String numeConsumator) throws InterruptedException {
@@ -28,13 +25,11 @@ class Depozit {
 class Producator implements Runnable {
     private final Depozit depozit;
     private final String nume;
-    private final int F;
     private final char[] obiecte;
 
-    public Producator(Depozit depozit, String nume, int F, char[] obiecte) {
+    public Producator(Depozit depozit, String nume, char[] obiecte) {
         this.depozit = depozit;
         this.nume = nume;
-        this.F = F;
         this.obiecte = obiecte;
     }
 
@@ -42,10 +37,9 @@ class Producator implements Runnable {
     public void run() {
         Random rand = new Random();
         try {
-            for (int i = 0; i < F; i += 2) {
+            while (!Thread.currentThread().isInterrupted()) {
                 char obiect1 = obiecte[rand.nextInt(obiecte.length)];
-                char obiect2 = obiecte[rand.nextInt(obiecte.length)];
-                depozit.produce(obiect1, obiect2, nume);
+                depozit.produce(obiect1, nume);
                 Thread.sleep(rand.nextInt(500));
             }
         } catch (InterruptedException e) {
@@ -85,20 +79,18 @@ public class Main {
         int Y = 3; // nr consumatori
         int Z = 3; // obiecte per consumator
         int D = 10; // capacitate depozit
-        int F = 2; // obiecte per producator
 
         char[] vocale = {'A', 'E', 'I', 'O', 'U'};
 
         Depozit depozit = new Depozit(D);
 
         ExecutorService poolProducatori = Executors.newFixedThreadPool(X);
-
         ExecutorService poolConsumatori = Executors.newFixedThreadPool(Y);
 
         // Pornim producatorii în pool
         for (int i = 0; i < X; i++) {
             poolProducatori.submit(
-                    new Producator(depozit, "Producator-" + (i + 1), F, vocale)
+                    new Producator(depozit, "Producator-" + (i + 1), vocale)
             );
         }
 
@@ -109,13 +101,15 @@ public class Main {
             );
         }
 
-        //oprirea
-        poolProducatori.shutdown();
+        // oprirea
         poolConsumatori.shutdown();
 
-        //asteptarea pana se inchide
-        poolProducatori.awaitTermination(1, TimeUnit.MINUTES);
+        // asteptarea pana se inchide
         poolConsumatori.awaitTermination(1, TimeUnit.MINUTES);
+
+        // oprim producatorii dupa ce consumatorii termina
+        poolProducatori.shutdownNow();
+        poolProducatori.awaitTermination(1, TimeUnit.SECONDS);
 
         System.out.println("Proces finalizat.");
     }
