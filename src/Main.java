@@ -10,9 +10,11 @@ class Depozit {
         this.buffer = new ArrayBlockingQueue<>(capacitate);
     }
 
-    public void produce(Character obiect, String numeProducator) throws InterruptedException {
-        buffer.put(obiect); // blochează dacă depozitul e plin
-        System.out.println(numeProducator + " a produs: " + obiect + " | Depozit: " + buffer);
+    public void produce(Character obiect1, Character obiect2, String numeProducator) throws InterruptedException {
+        buffer.put(obiect1); // blochează dacă depozitul e plin
+        System.out.println(numeProducator + " a produs: " + obiect1 + " | Depozit: " + buffer);
+        buffer.put(obiect2); // blochează dacă depozitul e plin
+        System.out.println(numeProducator + " a produs: " + obiect2 + " | Depozit: " + buffer);
     }
 
     public Character consume(String numeConsumator) throws InterruptedException {
@@ -39,11 +41,12 @@ class Producator implements Runnable {
     public void run() {
         Random rand = new Random();
         try {
-            for (int i = 0; i < F; i++) {
-                char obiect = obiecte[rand.nextInt(obiecte.length)];
-                depozit.produce(obiect, nume);
+
+                char obiect1 = obiecte[rand.nextInt(obiecte.length)];
+                char obiect2 = obiecte[rand.nextInt(obiecte.length)];
+                depozit.produce(obiect1, obiect2, nume);
                 Thread.sleep(rand.nextInt(500)); // timp aleator între producere
-            }
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -100,7 +103,7 @@ public class Main {
             consumatori[i].start();
         }
 
-        // Asteptam terminarea tuturor thread-urilor
+        // Asteptam terminarea tuturor thread-urilor    /   m. sincronizare  așteapta finalizarea unui fir de execuție.
         for (Thread t : producatori) t.join();
         for (Thread t : consumatori) t.join();
 
