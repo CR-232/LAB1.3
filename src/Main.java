@@ -11,14 +11,15 @@ class Depozit {
     }
 
     public void produce(Character obiect1, Character obiect2, String numeProducator) throws InterruptedException {
-        buffer.put(obiect1); // blochează dacă depozitul e plin
+        buffer.put(obiect1);
         System.out.println(numeProducator + " a produs: " + obiect1 + " | Depozit: " + buffer);
-        buffer.put(obiect2); // blochează dacă depozitul e plin
+
+        buffer.put(obiect2);
         System.out.println(numeProducator + " a produs: " + obiect2 + " | Depozit: " + buffer);
     }
 
     public Character consume(String numeConsumator) throws InterruptedException {
-        Character obiect = buffer.take(); // blochează dacă depozitul e gol
+        Character obiect = buffer.take();
         System.out.println(numeConsumator + " a consumat: " + obiect + " | Depozit: " + buffer);
         return obiect;
     }
@@ -41,12 +42,12 @@ class Producator implements Runnable {
     public void run() {
         Random rand = new Random();
         try {
-
+            for (int i = 0; i < F; i += 2) {
                 char obiect1 = obiecte[rand.nextInt(obiecte.length)];
                 char obiect2 = obiecte[rand.nextInt(obiecte.length)];
                 depozit.produce(obiect1, obiect2, nume);
-                Thread.sleep(rand.nextInt(500)); // timp aleator între producere
-
+                Thread.sleep(rand.nextInt(500));
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -69,7 +70,7 @@ class Consumator implements Runnable {
         try {
             for (int i = 0; i < Z; i++) {
                 depozit.consume(nume);
-                Thread.sleep(300); // timp aleator între consumuri
+                Thread.sleep(300);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -79,6 +80,7 @@ class Consumator implements Runnable {
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
+
         int X = 4; // nr producatori
         int Y = 3; // nr consumatori
         int Z = 3; // obiecte per consumator
@@ -89,23 +91,31 @@ public class Main {
 
         Depozit depozit = new Depozit(D);
 
-        // Pornim producatorii
-        Thread[] producatori = new Thread[X];
+        ExecutorService poolProducatori = Executors.newFixedThreadPool(X);
+
+        ExecutorService poolConsumatori = Executors.newFixedThreadPool(Y);
+
+        // Pornim producatorii în pool
         for (int i = 0; i < X; i++) {
-            producatori[i] = new Thread(new Producator(depozit, "Producator-" + (i + 1), F, vocale));
-            producatori[i].start();
+            poolProducatori.submit(
+                    new Producator(depozit, "Producator-" + (i + 1), F, vocale)
+            );
         }
 
-        // Pornim consumatorii
-        Thread[] consumatori = new Thread[Y];
+        // Pornim consumatorii în pool
         for (int i = 0; i < Y; i++) {
-            consumatori[i] = new Thread(new Consumator(depozit, "Consumator-" + (i + 1), Z));
-            consumatori[i].start();
+            poolConsumatori.submit(
+                    new Consumator(depozit, "Consumator-" + (i + 1), Z)
+            );
         }
 
-        // Asteptam terminarea tuturor thread-urilor    /   m. sincronizare  așteapta finalizarea unui fir de execuție.
-        for (Thread t : producatori) t.join();
-        for (Thread t : consumatori) t.join();
+        //oprirea
+        poolProducatori.shutdown();
+        poolConsumatori.shutdown();
+
+        //asteptarea pana se inchide
+        poolProducatori.awaitTermination(1, TimeUnit.MINUTES);
+        poolConsumatori.awaitTermination(1, TimeUnit.MINUTES);
 
         System.out.println("Proces finalizat.");
     }
