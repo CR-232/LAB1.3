@@ -9,9 +9,9 @@ public class Main {
         public Depozit(int capacitate) {
             this.buffer = new ArrayBlockingQueue<>(capacitate);
         }
-
+           //Care clase de sincronizare si pentru ce sincronizare sunt folosite la producator
         public void produce(Character obiect, String numeProducator) throws InterruptedException {
-            buffer.put(obiect); // blocant dacă e plin
+            buffer.put(obiect); // blocant dacă e plin, pana se elibereaza
             System.out.println(numeProducator + " a produs: " + obiect + " | Depozit: " + buffer);
         }
 
