@@ -12,7 +12,7 @@ public class CinaFilozofilor {
             this.id = id;
         }
 
-        //Care clase de sincronizare si pentru ce sincronizare sunt folosite
+        //Care clase de sincronizare si pentru ce sincronizare sunt folosite.
         public boolean ridica() {
             return lock.tryLock(); // încearcă să obțină lock-ul fără blocare
         }
